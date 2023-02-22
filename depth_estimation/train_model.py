@@ -8,6 +8,13 @@ import os
 from model import UNet
 from losses_tf import *
 
+os.environ["CUDA_VISIBLE_DEVICES"]="6,7"
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+    try:
+        tf.config.experimental.set_memory_growth(gpus[0], True)
+    except RuntimeError as e:
+        print(e)
 np.random.seed(42)
 
 IMAGE_WIDTH, IMAGE_HEIGHT, DEPTH_CHANNELS = 640, 480, 1
@@ -104,7 +111,8 @@ with tf.compat.v1.Graph().as_default(), tf.compat.v1.Session() as sess:
     print("Training data was loaded\n")
 
     print("Loading validation data...")
-    val_data, val_targets = load_data(VAL_DIR, NUM_VAL_IMAGES)
+    # val_data, val_targets = load_data(VAL_DIR, NUM_VAL_IMAGES)
+    val_data, val_targets = load_data(TRAIN_DIR, NUM_TRAIN_IMAGES)
     print("Test data was loaded\n")
 
     # Select a couple of val images for visualizing the results
@@ -123,7 +131,7 @@ with tf.compat.v1.Graph().as_default(), tf.compat.v1.Session() as sess:
         input_images = train_data[idx_train]
         target_images = train_targets[idx_train]
 
-        target_mask = np.asarray(target_images > 1, dtype=np.float)
+        target_mask = np.asarray(target_images > 1, dtype=float)
         target_mask = np.reshape(target_mask, [BATCH_SIZE, IMAGE_HEIGHT, IMAGE_WIDTH, DEPTH_CHANNELS])
         num_pixels = float(np.sum(target_mask))
 
@@ -147,7 +155,7 @@ with tf.compat.v1.Graph().as_default(), tf.compat.v1.Session() as sess:
                 input_eval = val_data[be:en]
                 target_eval = val_targets[be:en]
 
-                target_mask = np.asarray(target_eval > 1, dtype=np.float)
+                target_mask = np.asarray(target_eval > 1, dtype=float)
                 target_mask = np.reshape(target_mask, [BATCH_SIZE, IMAGE_HEIGHT, IMAGE_WIDTH, DEPTH_CHANNELS])
                 num_pixels = float(np.sum(target_mask))
 
